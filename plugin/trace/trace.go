@@ -12,6 +12,7 @@ import (
 	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/plugin/pkg/rcode"
+
 	// Plugin the trace package.
 	_ "github.com/coredns/coredns/plugin/pkg/trace"
 	"github.com/coredns/coredns/request"
@@ -19,6 +20,10 @@ import (
 	"github.com/miekg/dns"
 	ot "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
+	jaeger "github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
+	jaegermetrics "github.com/uber/jaeger-lib/metrics"
 	ddtrace "gopkg.in/DataDog/dd-trace-go.v0/opentracing"
 )
 
@@ -54,6 +59,8 @@ func (t *trace) OnStartup() error {
 			err = t.setupZipkin()
 		case "datadog":
 			err = t.setupDatadog()
+		case "jaeger":
+			err = t.setupJaeger()
 		default:
 			err = fmt.Errorf("unknown endpoint type: %s", t.EndpointType)
 		}
@@ -88,6 +95,24 @@ func (t *trace) setupDatadog() error {
 	tracer, _, err := ddtrace.NewTracer(config)
 	t.tracer = tracer
 	return err
+}
+
+func (t *trace) setupJaeger() error {
+	cfg := jaegercfg.Configuration{
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeProbabilistic,
+			Param: "0.1",
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LocalAgentHostPort: t.serviceEndpoint,
+		},
+	}
+
+	return cfg.New(
+		c.ServiceName,
+		jaegercfg.Logger(jaegerlog.StdLogger),
+		jaegercfg.Metrics(jaegermetrics.NullFactory),
+	)
 }
 
 // Name implements the Handler interface.
