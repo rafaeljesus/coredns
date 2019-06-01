@@ -20,7 +20,6 @@ import (
 	"github.com/miekg/dns"
 	ot "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
-	jaeger "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
 	jaegermetrics "github.com/uber/jaeger-lib/metrics"
@@ -99,10 +98,6 @@ func (t *trace) setupDatadog() error {
 
 func (t *trace) setupJaeger() error {
 	cfg := jaegercfg.Configuration{
-		Sampler: &jaegercfg.SamplerConfig{
-			Type:  jaeger.SamplerTypeProbabilistic,
-			Param: "0.1",
-		},
 		Reporter: &jaegercfg.ReporterConfig{
 			LocalAgentHostPort: t.serviceEndpoint,
 		},

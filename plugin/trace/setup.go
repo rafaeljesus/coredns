@@ -116,6 +116,7 @@ func normalizeEndpoint(epType, ep string) (string, string, error) {
 var supportedProviders = map[string]string{
 	"zipkin":  "localhost:9411",
 	"datadog": "localhost:8126",
+	"jaeger":  "localhost:6831",
 }
 
 const (
